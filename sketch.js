@@ -1,21 +1,18 @@
-let combos;
-
 let combos = [];
 
 function preload() {
   loadJSON("combo_genome.json", data => {
-    // If it's already an array
     if (Array.isArray(data)) {
       combos = data;
     } else {
-      // If somehow it's an object with numeric keys
       combos = Object.values(data);
     }
+    console.log("Loaded combos:", combos.length);
   });
 }
 
 function setup() {
-  createCanvas(windowWidth, combos.length * 20);
+  createCanvas(windowWidth, 2000);  // temporary fixed height
   noLoop();
 }
 
@@ -39,8 +36,6 @@ function draw() {
     });
   });
 }
-
-
 
 function colorFor(cat) {
   switch(cat) {
