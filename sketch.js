@@ -2,21 +2,29 @@ let combos = [];
 let nodes = [];
 
 function preload() {
-  combos = loadJSON("combo_genome.json");
+  let raw = loadJSON("combo_genome.json");
+  combos = Object.values(raw); // CRITICAL FIX
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  console.log("Loaded combos:", combos);  // verify it's an array
+  textFont("monospace");
   buildNodes();
 }
 
 function buildNodes() {
-  nodes = combos.map(c => {
-    let genome = c.genome || [];
+  nodes = [];
 
-    let length = genome.length;
-    let damage = c.damage || 0;
+  combos.forEach(c => {
+    if (!c.genome || c.genome.length === 0) return;
+
+    let damage = Number(c.damage);
+    if (isNaN(damage)) damage = 0;
+
+    let meter = Number(c.meter_cost);
+    if (isNaN(meter)) meter = 0;
+
+    let genome = c.genome;
 
     let counts = {
       light: 0,
@@ -38,28 +46,30 @@ function buildNodes() {
       counts[a] > counts[b] ? a : b
     );
 
-    let superDensity = counts.super / max(1, length);
+    let superDensity = counts.super / genome.length;
 
-    return {
+    nodes.push({
       character: c.character_1 || "Unknown",
-      damage,
-      meter: c.meter_cost || 0,
-      length,
-      dominant,
-      superDensity,
-      genome,
+      damage: damage,
+      meter: meter,
+      length: genome.length,
+      dominant: dominant,
+      superDensity: superDensity,
+      genome: genome,
       x: 0,
       y: 0,
       size: 0
-    };
+    });
   });
 
-  let maxLen = max(nodes.map(n => n.length));
-  let maxDmg = max(nodes.map(n => n.damage));
+  if (nodes.length === 0) return;
+
+  let maxLen = Math.max(...nodes.map(n => n.length)) || 1;
+  let maxDmg = Math.max(...nodes.map(n => n.damage)) || 1;
 
   nodes.forEach(n => {
-    n.x = map(n.length, 0, maxLen, 100, width - 100);
-    n.y = map(n.damage, 0, maxDmg, height - 100, 100);
+    n.x = map(n.length, 0, maxLen, 120, width - 80);
+    n.y = map(n.damage, 0, maxDmg, height - 100, 80);
     n.size = map(n.superDensity, 0, 1, 6, 40);
   });
 }
@@ -78,14 +88,16 @@ function draw() {
 
 function drawAxes() {
   stroke(80);
-  line(80, height - 80, width - 50, height - 80); // X
-  line(80, height - 80, 80, 50); // Y
+  line(100, height - 80, width - 60, height - 80);
+  line(100, height - 80, 100, 60);
 
   noStroke();
   fill(150);
-  text("Combo Length →", width / 2, height - 40);
+  textSize(14);
+  text("Combo Length →", width / 2, height - 30);
+
   push();
-  translate(30, height / 2);
+  translate(40, height / 2);
   rotate(-HALF_PI);
   text("Damage →", 0, 0);
   pop();
@@ -96,27 +108,27 @@ function drawNode(n) {
 
   strokeWeight(n.meter > 0 ? 2 : 0);
   stroke(n.meter > 0 ? color(255, 200, 0) : 0);
-  fill(c);
 
+  fill(c);
   ellipse(n.x, n.y, n.size);
 }
 
 function colorForType(type) {
   switch (type) {
     case "light":
-      return color(100, 200, 255);
+      return color(120, 200, 255);
     case "medium":
-      return color(100, 255, 150);
+      return color(120, 255, 170);
     case "heavy":
       return color(255, 120, 120);
     case "super":
-      return color(200, 100, 255);
+      return color(200, 120, 255);
     case "assist":
-      return color(255, 200, 100);
+      return color(255, 220, 120);
     case "dash":
       return color(180);
     default:
-      return color(120);
+      return color(140);
   }
 }
 
@@ -125,22 +137,23 @@ function drawTooltip() {
     dist(mouseX, mouseY, n.x, n.y) < n.size / 2
   );
 
-  if (hovered) {
-    fill(0, 220);
-    rect(mouseX + 10, mouseY + 10, 260, 110);
+  if (!hovered) return;
 
-    fill(255);
-    textSize(12);
-    text(
-      `Character: ${hovered.character}
+  fill(0, 220);
+  rect(mouseX + 12, mouseY + 12, 280, 120);
+
+  fill(255);
+  textSize(12);
+  text(
+`Character: ${hovered.character}
 Damage: ${hovered.damage}
 Length: ${hovered.length}
 Meter: ${hovered.meter}
-Dominant: ${hovered.dominant}`,
-      mouseX + 20,
-      mouseY + 30
-    );
-  }
+Dominant: ${hovered.dominant}
+Super Density: ${hovered.superDensity.toFixed(2)}`,
+    mouseX + 20,
+    mouseY + 32
+  );
 }
 
 function mousePressed() {
@@ -149,9 +162,14 @@ function mousePressed() {
   );
 
   if (clicked) {
-    console.log("=== COMBO GENOME ===");
+    console.log("=== GENOME ===");
     console.table(clicked.genome);
   }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  buildNodes();
 }
 
 function windowResized() {
