@@ -89,8 +89,13 @@ function colorForType(type) {
 }
 
 function drawLegend() {
-  let y = height - 80;
-  let x = 20;
+  fill(25);
+  noStroke();
+  rect(width - 200, 50, 180, 320, 8);
+  let legendX = width - 180;   // right side
+  let legendY = 80;            // start near top
+  let boxSize = 16;
+  let spacing = 28;
 
   let types = [
     "light",
@@ -104,12 +109,24 @@ function drawLegend() {
     "other"
   ];
 
-  for (let t of types) {
+  fill(200);
+  textSize(14);
+  text("Legend", legendX, legendY - 25);
+
+  for (let i = 0; i < types.length; i++) {
+    let t = types[i];
+
     fill(colorForType(t));
-    rect(x, y, 15, 15);
+    noStroke();
+    rect(legendX, legendY + i * spacing, boxSize, boxSize, 3);
+
     fill(200);
-    text(t, x + 20, y + 12);
-    x += 90;
+    textSize(12);
+    text(
+      t,
+      legendX + boxSize + 12,
+      legendY + i * spacing + boxSize - 4
+    );
   }
 }
 
