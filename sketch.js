@@ -30,69 +30,49 @@ function draw() {
 
     if (y > height - 40) break;
   }
-  drawTooltip();
   drawLegend();
-}
-
-let hoverIndex = Math.floor((mouseY - startY) / rowHeight);
-
-if (hoverIndex >= 0 && hoverIndex < combos.length) {
-  fill(255, 255, 255, 20);
-  noStroke();
-  rect(0, startY + hoverIndex * rowHeight - rowHeight + 4,
-       width, rowHeight);
 }
 
 function drawGenome(combo, baseY) {
   if (!combo.genome) return;
 
-  let x = 40;              // start closer to left
-  let blockHeight = 14;    // uniform height
+  let genomeStartX = 40;
+  let infoStartX = width - 260;   // right-side info column
+  let blockHeight = 14;
+
+  // ---- DRAW GENOME ----
+  let x = genomeStartX;
 
   for (let g of combo.genome) {
-
     fill(colorForType(g.type));
-    stroke(0);              // black border
+    stroke(0);
     strokeWeight(1);
-
     rect(x, baseY - blockHeight, blockWidth, blockHeight);
-
-    x += blockWidth;        // uniform spacing
+    x += blockWidth;
   }
-}
 
-function drawTooltip() {
+  // ---- DRAW INFO BOX ----
+  let boxWidth = 220;
+  let boxHeight = 26;
 
-  let rowIndex = Math.floor((mouseY - startY) / rowHeight);
-
-  if (rowIndex < 0 || rowIndex >= combos.length) return;
-
-  let combo = combos[rowIndex];
-  if (!combo || !combo.genome) return;
-
-  let label = `${combo.character_1 || "Unknown"} 
-Damage: ${combo.damage || 0} 
-Meter: ${combo.meter_cost || 0}`;
-
-  let padding = 10;
-  textSize(13);
-  let w = textWidth("Damage: 0000") + padding * 2;
-  let h = 60;
-
-  let tooltipX = mouseX + 15;
-  let tooltipY = mouseY + 15;
-
-  // Keep inside screen
-  if (tooltipX + w > width) tooltipX = width - w - 10;
-  if (tooltipY + h > height) tooltipY = height - h - 10;
-
-  fill(0, 230);
-  stroke(255);
-  rect(tooltipX, tooltipY, w, h, 6);
+  fill(25);
+  stroke(60);
+  rect(infoStartX, baseY - boxHeight + 6, boxWidth, boxHeight, 4);
 
   noStroke();
-  fill(255);
-  text(label, tooltipX + padding, tooltipY + 20);
+  fill(220);
+  textSize(12);
+  textAlign(LEFT, CENTER);
+
+  let name = combo.character_1 || "Unknown";
+  let damage = combo.damage || 0;
+  let meter = combo.meter_cost || 0;
+
+  text(
+    `${name}  |  ${damage} dmg  |  ${meter} bar`,
+    infoStartX + 10,
+    baseY - 6
+  );
 }
 
 function colorForType(type) {
