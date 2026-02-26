@@ -34,12 +34,13 @@ function draw() {
   drawLegend();
 }
 
-function drawGenome(combo, y) {
+function drawGenome(combo, baseY) {
   if (!combo.genome) return;
 
   let x = 180;
 
   for (let g of combo.genome) {
+    let yOffset = 0;
     let h = 16;
 
     if (g.type === "super") {
@@ -47,12 +48,12 @@ function drawGenome(combo, y) {
     }
 
     if (g.type === "jump") {
-      y -= 6;
+      yOffset = -8;  // temporary visual lift
     }
 
     fill(colorForType(g.type));
     noStroke();
-    rect(x, y - h / 2, blockWidth, h, 2);
+    rect(x, baseY + yOffset - h / 2, blockWidth, h, 2);
 
     if (g.type === "dash") {
       x += blockWidth * 0.6;
@@ -68,7 +69,7 @@ function drawGenome(combo, y) {
   text(
     `${combo.character_1 || "Unknown"} | ${combo.damage || 0} dmg | ${combo.meter_cost || 0} bar`,
     20,
-    y + 4
+    baseY + 4
   );
 }
 
