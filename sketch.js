@@ -1,7 +1,17 @@
 let combos;
 
+let combos = [];
+
 function preload() {
-  combos = loadJSON("combo_genome.json");
+  loadJSON("combo_genome.json", data => {
+    // If it's already an array
+    if (Array.isArray(data)) {
+      combos = data;
+    } else {
+      // If somehow it's an object with numeric keys
+      combos = Object.values(data);
+    }
+  });
 }
 
 function setup() {
@@ -16,16 +26,21 @@ function draw() {
   let boxWidth = 15;
 
   combos.forEach((combo, i) => {
-    combo.categories.forEach((cat, j) => {
+    if (!combo.categories) return;
 
+    combo.categories.forEach((cat, j) => {
       fill(colorFor(cat));
-      rect(50 + j * boxWidth,
-           i * rowHeight,
-           boxWidth - 2,
-           rowHeight - 2);
+      rect(
+        50 + j * boxWidth,
+        i * rowHeight,
+        boxWidth - 2,
+        rowHeight - 2
+      );
     });
   });
 }
+
+
 
 function colorFor(cat) {
   switch(cat) {
