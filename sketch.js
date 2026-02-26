@@ -2,7 +2,8 @@ let combos = [];
 let nodes = [];
 
 function preload() {
-  combos = loadJSON("combo_genome.json");
+  let raw = loadJSON("combo_genome.json");
+  combos = Object.values(raw); // convert object → array
 }
 
 function setup() {
