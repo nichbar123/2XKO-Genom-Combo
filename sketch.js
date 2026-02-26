@@ -1,7 +1,8 @@
 let combos = [];
-let rowHeight = 40;
+let rowHeight = 32;
 let blockWidth = 8;
 let startY = 60;
+let scrollOffset = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -21,15 +22,15 @@ function draw() {
 
   if (combos.length === 0) return;
 
-  let y = startY;
+  let y = startY - scrollOffset;
 
   for (let i = 0; i < combos.length; i++) {
-    let combo = combos[i];
-    drawGenome(combo, y);
+    if (y > -rowHeight && y < height + rowHeight) {
+      drawGenome(combos[i], y);
+    }
     y += rowHeight;
-
-    if (y > height - 40) break;
   }
+
   drawLegend();
 }
 
@@ -37,10 +38,10 @@ function drawGenome(combo, baseY) {
   if (!combo.genome) return;
 
   let genomeStartX = 40;
-  let infoStartX = width - 260;   // right-side info column
+  let infoStartX = width - 280;
   let blockHeight = 14;
 
-  // ---- DRAW GENOME ----
+  // ---- GENOME BLOCKS ----
   let x = genomeStartX;
 
   for (let g of combo.genome) {
@@ -51,9 +52,9 @@ function drawGenome(combo, baseY) {
     x += blockWidth;
   }
 
-  // ---- DRAW INFO BOX ----
-  let boxWidth = 220;
-  let boxHeight = 26;
+  // ---- INFO BOX ----
+  let boxWidth = 240;
+  let boxHeight = 24;
 
   fill(25);
   stroke(60);
@@ -75,6 +76,13 @@ function drawGenome(combo, baseY) {
   );
 }
 
+function mouseWheel(event) {
+  scrollOffset += event.delta;
+
+  let maxScroll = max(0, combos.length * rowHeight - height + 100);
+  scrollOffset = constrain(scrollOffset, 0, maxScroll);
+}
+
 function colorForType(type) {
   switch (type) {
     case "light":      return "#a6cee3";
@@ -94,8 +102,9 @@ function drawLegend() {
   fill(25);
   noStroke();
   rect(width - 200, 50, 180, 320, 8);
-  let legendX = width - 180;   // right side
-  let legendY = 80;            // start near top
+
+  let legendX = width - 180;
+  let legendY = 80;
   let boxSize = 16;
   let spacing = 28;
 
