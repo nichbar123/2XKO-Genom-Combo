@@ -1,10 +1,16 @@
 let combos = [];
 let nodes = [];
 
+console.log("SKETCH LOADED");
+
 function preload() {
+  console.log("PRELOAD START");
   let raw = loadJSON("combo_genome.json");
-  combos = Object.values(raw); // CRITICAL FIX
+  console.log("RAW TYPE:", typeof raw, raw);
+  combos = Object.values(raw);
+  console.log("COMBOS LEN:", combos.length, "IS ARRAY:", Array.isArray(combos));
 }
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -171,6 +177,9 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   buildNodes();
 }
+
+console.log("SKETCH LOADED");
+
 
 function windowResized() {
   resizeCanvas(window.innerWidth, window.innerHeight);
