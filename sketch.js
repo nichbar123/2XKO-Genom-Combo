@@ -75,22 +75,16 @@ function drawGenome(combo, baseY) {
 
 function colorForType(type) {
   switch (type) {
-    case "light":
-      return color(100, 200, 255);
-    case "medium":
-      return color(100, 255, 170);
-    case "heavy":
-      return color(255, 120, 120);
-    case "super":
-      return color(200, 120, 255);
-    case "assist":
-      return color(255, 220, 120);
-    case "dash":
-      return color(180);
-    case "jump":
-      return color(150);
-    default:
-      return color(90);
+    case "light":      return "#4FC3F7";
+    case "medium":     return "#29B6F6";
+    case "heavy":      return "#EF5350";
+    case "super":      return "#B71C1C";
+    case "assist":     return "#FBC02D";
+    case "jump":       return "#00ACC1";
+    case "dash":       return "#9E9E9E";
+    case "direction":  return "#424242";
+    case "other":      return "#FF00FF"; // debug
+    default:           return "#111";
   }
 }
 
