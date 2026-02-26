@@ -1,21 +1,21 @@
 let combos = [];
 let nodes = [];
 
-console.log("SKETCH LOADED");
-
-function preload() {
-  console.log("PRELOAD START");
-  let raw = loadJSON("combo_genome.json");
-  console.log("RAW TYPE:", typeof raw, raw);
-  combos = Object.values(raw);
-  console.log("COMBOS LEN:", combos.length, "IS ARRAY:", Array.isArray(combos));
-}
-
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont("monospace");
-  buildNodes();
+
+  loadJSON("combo_genome.json", data => {
+    console.log("JSON LOADED:", data);
+
+    combos = Array.isArray(data)
+      ? data
+      : Object.values(data);
+
+    console.log("Combos length:", combos.length);
+
+    buildNodes();
+  });
 }
 
 function buildNodes() {
