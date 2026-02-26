@@ -2,14 +2,12 @@ let combos = [];
 let nodes = [];
 
 function preload() {
-  let raw = loadJSON("combo_genome.json");
-  combos = Object.values(raw); // convert object → array
+  combos = loadJSON("combo_genome.json");
 }
 
 function setup() {
-  createCanvas(window.innerWidth, window.innerHeight);
-  textFont("monospace");
-
+  createCanvas(windowWidth, windowHeight);
+  console.log("Loaded combos:", combos);  // verify it's an array
   buildNodes();
 }
 
