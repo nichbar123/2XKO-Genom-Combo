@@ -53,7 +53,7 @@ function drawGenome(combo, baseY) {
 
     fill(colorForType(g.type));
     noStroke();
-    rect(x, baseY + yOffset - h / 2, blockWidth, h, 2);
+    rect(x, baseY - 12, blockWidth, 12);
 
     if (g.type === "dash") {
       x += blockWidth * 0.6;
