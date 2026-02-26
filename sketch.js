@@ -37,40 +37,19 @@ function draw() {
 function drawGenome(combo, baseY) {
   if (!combo.genome) return;
 
-  let x = 180;
+  let x = 40;              // start closer to left
+  let blockHeight = 14;    // uniform height
 
   for (let g of combo.genome) {
-    let yOffset = 0;
-    let h = 16;
-
-    if (g.type === "super") {
-      h = 16 + (g.super_level || 1) * 6;
-    }
-
-    if (g.type === "jump") {
-      yOffset = -8;  // temporary visual lift
-    }
 
     fill(colorForType(g.type));
-    noStroke();
-    rect(x, baseY - 12, blockWidth, 12);
+    stroke(0);              // black border
+    strokeWeight(1);
 
-    if (g.type === "dash") {
-      x += blockWidth * 0.6;
-    } else if (g.type === "direction") {
-      x += blockWidth * 0.4;
-    } else {
-      x += blockWidth;
-    }
+    rect(x, baseY - blockHeight, blockWidth, blockHeight);
+
+    x += blockWidth;        // uniform spacing
   }
-
-  fill(200);
-  textSize(11);
-  text(
-    `${combo.character_1 || "Unknown"} | ${combo.damage || 0} dmg | ${combo.meter_cost || 0} bar`,
-    20,
-    baseY + 4
-  );
 }
 
 function colorForType(type) {
