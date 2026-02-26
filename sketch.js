@@ -99,7 +99,9 @@ function drawLegend() {
     "super",
     "assist",
     "dash",
-    "jump"
+    "jump",
+    "direction",
+    "other"
   ];
 
   for (let t of types) {
