@@ -1,130 +1,83 @@
 let combos = [];
-let nodes = [];
+let rowHeight = 40;
+let blockWidth = 8;
+let startY = 60;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont("monospace");
 
   loadJSON("combo_genome.json", data => {
-    console.log("JSON LOADED:", data);
-
     combos = Array.isArray(data)
       ? data
       : Object.values(data);
 
-    console.log("Combos length:", combos.length);
-
-    buildNodes();
-  });
-}
-
-function buildNodes() {
-  nodes = [];
-
-  combos.forEach(c => {
-    if (!c.genome || c.genome.length === 0) return;
-
-    let damage = Number(c.damage);
-    if (isNaN(damage)) damage = 0;
-
-    let meter = Number(c.meter_cost);
-    if (isNaN(meter)) meter = 0;
-
-    let genome = c.genome;
-
-    let counts = {
-      light: 0,
-      medium: 0,
-      heavy: 0,
-      super: 0,
-      assist: 0,
-      dash: 0,
-      jump: 0
-    };
-
-    genome.forEach(g => {
-      if (counts[g.type] !== undefined) {
-        counts[g.type]++;
-      }
-    });
-
-    let dominant = Object.keys(counts).reduce((a, b) =>
-      counts[a] > counts[b] ? a : b
-    );
-
-    let superDensity = counts.super / genome.length;
-
-    nodes.push({
-      character: c.character_1 || "Unknown",
-      damage: damage,
-      meter: meter,
-      length: genome.length,
-      dominant: dominant,
-      superDensity: superDensity,
-      genome: genome,
-      x: 0,
-      y: 0,
-      size: 0
-    });
-  });
-
-  if (nodes.length === 0) return;
-
-  let maxLen = Math.max(...nodes.map(n => n.length)) || 1;
-  let maxDmg = Math.max(...nodes.map(n => n.damage)) || 1;
-
-  nodes.forEach(n => {
-    n.x = map(n.length, 0, maxLen, 120, width - 80);
-    n.y = map(n.damage, 0, maxDmg, height - 100, 80);
-    n.size = map(n.superDensity, 0, 1, 6, 40);
+    console.log("Loaded:", combos.length);
   });
 }
 
 function draw() {
-  background(10);
+  background(15);
 
-  drawAxes();
+  if (combos.length === 0) return;
 
-  nodes.forEach(n => {
-    drawNode(n);
-  });
+  let y = startY;
 
-  drawTooltip();
+  for (let i = 0; i < combos.length; i++) {
+    let combo = combos[i];
+    drawGenome(combo, y);
+    y += rowHeight;
+
+    if (y > height - 40) break;
+  }
+
+  drawLegend();
 }
 
-function drawAxes() {
-  stroke(80);
-  line(100, height - 80, width - 60, height - 80);
-  line(100, height - 80, 100, 60);
+function drawGenome(combo, y) {
+  if (!combo.genome) return;
 
-  noStroke();
-  fill(150);
-  textSize(14);
-  text("Combo Length →", width / 2, height - 30);
+  let x = 180;
 
-  push();
-  translate(40, height / 2);
-  rotate(-HALF_PI);
-  text("Damage →", 0, 0);
-  pop();
-}
+  for (let g of combo.genome) {
+    let h = 16;
 
-function drawNode(n) {
-  let c = colorForType(n.dominant);
+    if (g.type === "super") {
+      h = 16 + (g.super_level || 1) * 6;
+    }
 
-  strokeWeight(n.meter > 0 ? 2 : 0);
-  stroke(n.meter > 0 ? color(255, 200, 0) : 0);
+    if (g.type === "jump") {
+      y -= 6;
+    }
 
-  fill(c);
-  ellipse(n.x, n.y, n.size);
+    fill(colorForType(g.type));
+    noStroke();
+    rect(x, y - h / 2, blockWidth, h, 2);
+
+    if (g.type === "dash") {
+      x += blockWidth * 0.6;
+    } else if (g.type === "direction") {
+      x += blockWidth * 0.4;
+    } else {
+      x += blockWidth;
+    }
+  }
+
+  fill(200);
+  textSize(11);
+  text(
+    `${combo.character_1 || "Unknown"} | ${combo.damage || 0} dmg | ${combo.meter_cost || 0} bar`,
+    20,
+    y + 4
+  );
 }
 
 function colorForType(type) {
   switch (type) {
     case "light":
-      return color(120, 200, 255);
+      return color(100, 200, 255);
     case "medium":
-      return color(120, 255, 170);
+      return color(100, 255, 170);
     case "heavy":
       return color(255, 120, 120);
     case "super":
@@ -133,55 +86,36 @@ function colorForType(type) {
       return color(255, 220, 120);
     case "dash":
       return color(180);
+    case "jump":
+      return color(150);
     default:
-      return color(140);
+      return color(90);
   }
 }
 
-function drawTooltip() {
-  let hovered = nodes.find(n =>
-    dist(mouseX, mouseY, n.x, n.y) < n.size / 2
-  );
+function drawLegend() {
+  let y = height - 80;
+  let x = 20;
 
-  if (!hovered) return;
+  let types = [
+    "light",
+    "medium",
+    "heavy",
+    "super",
+    "assist",
+    "dash",
+    "jump"
+  ];
 
-  fill(0, 220);
-  rect(mouseX + 12, mouseY + 12, 280, 120);
-
-  fill(255);
-  textSize(12);
-  text(
-`Character: ${hovered.character}
-Damage: ${hovered.damage}
-Length: ${hovered.length}
-Meter: ${hovered.meter}
-Dominant: ${hovered.dominant}
-Super Density: ${hovered.superDensity.toFixed(2)}`,
-    mouseX + 20,
-    mouseY + 32
-  );
-}
-
-function mousePressed() {
-  let clicked = nodes.find(n =>
-    dist(mouseX, mouseY, n.x, n.y) < n.size / 2
-  );
-
-  if (clicked) {
-    console.log("=== GENOME ===");
-    console.table(clicked.genome);
+  for (let t of types) {
+    fill(colorForType(t));
+    rect(x, y, 15, 15);
+    fill(200);
+    text(t, x + 20, y + 12);
+    x += 90;
   }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  buildNodes();
-}
-
-console.log("SKETCH LOADED");
-
-
-function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
-  buildNodes();
 }
