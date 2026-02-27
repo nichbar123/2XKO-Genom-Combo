@@ -77,10 +77,17 @@ function drawGenome(combo, baseY) {
 }
 
 function mouseWheel(event) {
-  scrollOffset += event.delta;
 
-  let maxScroll = max(0, combos.length * rowHeight - height + 100);
+  scrollOffset += event.delta * 0.5;   // adjust speed
+
+  let totalHeight = combos.length * rowHeight;
+  let visibleHeight = height - startY;
+
+  let maxScroll = max(0, totalHeight - visibleHeight);
+
   scrollOffset = constrain(scrollOffset, 0, maxScroll);
+
+  return false;  // 🔥 prevents page from scrolling
 }
 
 function colorForType(type) {
