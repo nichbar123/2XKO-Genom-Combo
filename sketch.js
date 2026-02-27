@@ -58,7 +58,7 @@ function drawGenome(combo, baseY) {
 
   fill(25);
   stroke(60);
-  rect(infoStartX, baseY - boxHeight + 6, boxWidth, boxHeight, 4);
+  rect(infoStartX, baseY - boxHeight + 6, boxWidth, boxHeight, 20);
 
   noStroke();
   fill(220);
