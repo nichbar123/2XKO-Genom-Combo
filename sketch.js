@@ -4,14 +4,15 @@ let blockWidth = 8;
 let startY = 60;
 let scrollOffset = 0;
 
-let legendWidth = 200;
+let legendWidth = 220;
 let infoWidth = 280;
 let rightPadding = 20;
 
-let sortMode = "damage";
 let selectedMeter = "ALL";
 let selectedCharacter = "ALL";
 let characters = [];
+
+let buttons = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -34,6 +35,7 @@ function draw() {
 
   let visible = getVisibleCombos();
 
+  // ---- DRAW SCROLLING GENOMES ----
   let y = startY - scrollOffset;
 
   for (let i = 0; i < visible.length; i++) {
@@ -44,6 +46,7 @@ function draw() {
   }
 
   drawLegend();
+  drawFilterButtons();
 }
 
 function getVisibleCombos() {
@@ -57,13 +60,8 @@ function getVisibleCombos() {
     filtered = filtered.filter(c => c.meter_cost == selectedMeter);
   }
 
-  if (sortMode === "damage") {
-    filtered = filtered.slice().sort((a,b) => (b.damage||0) - (a.damage||0));
-  }
-
-  if (sortMode === "meter") {
-    filtered = filtered.slice().sort((a,b) => (b.meter_cost||0) - (a.meter_cost||0));
-  }
+  // ALWAYS sort by damage
+  filtered = filtered.slice().sort((a,b) => (b.damage||0) - (a.damage||0));
 
   return filtered;
 }
@@ -108,63 +106,11 @@ function drawGenomeRow(combo, baseY) {
   );
 }
 
-function mouseWheel(event) {
-  let visible = getVisibleCombos();
-
-  scrollOffset += event.delta * 0.5;
-
-  let totalHeight = visible.length * rowHeight;
-  let visibleHeight = height - startY;
-
-  let maxScroll = max(0, totalHeight - visibleHeight);
-  scrollOffset = constrain(scrollOffset, 0, maxScroll);
-
-  return false;
-}
-
-function keyPressed() {
-
-  if (key === 'd') sortMode = "damage";
-  if (key === 'm') sortMode = "meter";
-
-  if (key === '0') selectedMeter = "ALL";
-  if (key === '1') selectedMeter = 1;
-  if (key === '2') selectedMeter = 2;
-  if (key === '3') selectedMeter = 3;
-
-  if (key === 'c') {
-    let currentIndex = characters.indexOf(selectedCharacter);
-    currentIndex++;
-    if (currentIndex >= characters.length) {
-      selectedCharacter = "ALL";
-    } else {
-      selectedCharacter = characters[currentIndex];
-    }
-  }
-
-  scrollOffset = 0;
-}
-
-function colorForType(type) {
-  switch (type) {
-    case "light":      return "#a6cee3";
-    case "medium":     return "#1f78b4";
-    case "heavy":      return "#b2df8a";
-    case "super":      return "#33a02c";
-    case "assist":     return "#fb9a99";
-    case "dash":       return "#e31a1c";
-    case "jump":       return "#fdbf6f";
-    case "direction":  return "#ff7f00";
-    case "other":      return "#cab2d6";
-    default:           return "#222";
-  }
-}
-
 function drawLegend() {
 
   fill(25);
   noStroke();
-  rect(width - legendWidth, 50, legendWidth - 20, 320, 8);
+  rect(width - legendWidth, 50, legendWidth - 20, 380, 10);
 
   let legendX = width - legendWidth + 20;
   let legendY = 80;
@@ -191,6 +137,114 @@ function drawLegend() {
       legendX + boxSize + 12,
       legendY + i * spacing + boxSize - 4
     );
+  }
+}
+
+function drawFilterButtons() {
+
+  buttons = [];
+
+  let x = width - legendWidth + 20;
+  let y = 330;
+  let w = legendWidth - 60;
+  let h = 30;
+
+  drawButton(
+    x, y, w, h,
+    `Character: ${selectedCharacter}`,
+    () => cycleCharacter()
+  );
+
+  drawButton(
+    x, y + 50, w, h,
+    `Meter: ${selectedMeter}`,
+    () => cycleMeter()
+  );
+}
+
+function drawButton(x, y, w, h, label, action) {
+
+  fill(40);
+  stroke(80);
+  rect(x, y, w, h, 6);
+
+  noStroke();
+  fill(220);
+  textSize(12);
+  textAlign(CENTER, CENTER);
+  text(label, x + w / 2, y + h / 2);
+
+  buttons.push({x, y, w, h, action});
+}
+
+function mousePressed() {
+  for (let b of buttons) {
+    if (
+      mouseX > b.x &&
+      mouseX < b.x + b.w &&
+      mouseY > b.y &&
+      mouseY < b.y + b.h
+    ) {
+      b.action();
+      scrollOffset = 0;
+    }
+  }
+}
+
+function cycleCharacter() {
+  if (selectedCharacter === "ALL") {
+    selectedCharacter = characters[0] || "ALL";
+  } else {
+    let index = characters.indexOf(selectedCharacter);
+    index++;
+    if (index >= characters.length) {
+      selectedCharacter = "ALL";
+    } else {
+      selectedCharacter = characters[index];
+    }
+  }
+}
+
+function cycleMeter() {
+  if (selectedMeter === "ALL") {
+    selectedMeter = 0;
+  } else if (selectedMeter === 0) {
+    selectedMeter = 1;
+  } else if (selectedMeter === 1) {
+    selectedMeter = 2;
+  } else if (selectedMeter === 2) {
+    selectedMeter = 3;
+  } else {
+    selectedMeter = "ALL";
+  }
+}
+
+function mouseWheel(event) {
+  let visible = getVisibleCombos();
+
+  scrollOffset += event.delta * 0.5;
+
+  let totalHeight = visible.length * rowHeight;
+  let visibleHeight = height - startY;
+
+  let maxScroll = max(0, totalHeight - visibleHeight);
+  scrollOffset = constrain(scrollOffset, 0, maxScroll);
+
+  return false;
+}
+
+function colorForType(type) {
+  switch (type) {
+    case "light":      return "#a6cee3";
+    case "medium":     return "#1f78b4";
+    case "heavy":      return "#b2df8a";
+    case "super":      return "#33a02c";
+    case "assist":     return "#fb9a99";
+    case "dash":       return "#e31a1c";
+    case "jump":       return "#fdbf6f";
+    case "direction":  return "#ff7f00";
+    case "other":      return "#cab2d6";
+    default:           return "#222";
   }
 }
 
