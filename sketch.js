@@ -233,6 +233,20 @@ function mouseWheel(event) {
   return false;
 }
 
+function touchMoved() {
+  if (touches.length > 0) {
+    scrollOffset += movedY * -1;
+
+    let visible = getVisibleCombos();
+    let totalHeight = visible.length * rowHeight;
+    let visibleHeight = height - startY;
+    let maxScroll = max(0, totalHeight - visibleHeight);
+
+    scrollOffset = constrain(scrollOffset, 0, maxScroll);
+  }
+  return false; // prevents browser scroll
+}
+
 function colorForType(type) {
   switch (type) {
     case "light":      return "#a6cee3";
