@@ -4,6 +4,15 @@ let blockWidth = 8;
 let startY = 60;
 let scrollOffset = 0;
 
+let legendWidth = 200;
+let infoWidth = 220;
+let rightPadding = 20;
+
+let sortMode = "damage";          // "damage" | "meter"
+let selectedMeter = "ALL";
+let selectedCharacter = "ALL";
+let characters = [];
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont("monospace");
@@ -12,6 +21,10 @@ function setup() {
     combos = Array.isArray(data)
       ? data
       : Object.values(data);
+
+    characters = [...new Set(
+      combos.map(c => c.character_1).filter(Boolean)
+    )];
 
     console.log("Loaded:", combos.length);
   });
@@ -22,26 +35,48 @@ function draw() {
 
   if (combos.length === 0) return;
 
+  let visible = getVisibleCombos();
+
   let y = startY - scrollOffset;
 
-  for (let i = 0; i < combos.length; i++) {
+  for (let i = 0; i < visible.length; i++) {
     if (y > -rowHeight && y < height + rowHeight) {
-      drawGenome(combos[i], y);
+      drawGenome(visible[i], y);
     }
     y += rowHeight;
   }
 
   drawLegend();
+  drawHoveredInfo(visible);
+}
+
+function getVisibleCombos() {
+  let filtered = combos;
+
+  if (selectedCharacter !== "ALL") {
+    filtered = filtered.filter(c => c.character_1 === selectedCharacter);
+  }
+
+  if (selectedMeter !== "ALL") {
+    filtered = filtered.filter(c => c.meter_cost == selectedMeter);
+  }
+
+  if (sortMode === "damage") {
+    filtered = filtered.slice().sort((a,b) => (b.damage||0) - (a.damage||0));
+  }
+
+  if (sortMode === "meter") {
+    filtered = filtered.slice().sort((a,b) => (b.meter_cost||0) - (a.meter_cost||0));
+  }
+
+  return filtered;
 }
 
 function drawGenome(combo, baseY) {
   if (!combo.genome) return;
 
   let genomeStartX = 40;
-  let infoStartX = width - 280;
   let blockHeight = 14;
-
-  // ---- GENOME BLOCKS ----
   let x = genomeStartX;
 
   for (let g of combo.genome) {
@@ -51,43 +86,84 @@ function drawGenome(combo, baseY) {
     rect(x, baseY - blockHeight, blockWidth, blockHeight);
     x += blockWidth;
   }
+}
 
-  // ---- INFO BOX ----
-  let boxWidth = 240;
-  let boxHeight = 24;
+function drawHoveredInfo(visible) {
 
-  fill(25);
-  stroke(60);
-  rect(infoStartX, baseY - boxHeight + 6, boxWidth, boxHeight, 20);
+  let rowIndex = Math.floor((mouseY + scrollOffset - startY) / rowHeight);
+
+  if (rowIndex < 0 || rowIndex >= visible.length) return;
+
+  let combo = visible[rowIndex];
+
+  let panelX = width - legendWidth - infoWidth - rightPadding;
+  let panelY = mouseY - 30;
+
+  let panelW = infoWidth;
+  let panelH = 80;
+
+  if (panelY + panelH > height) panelY = height - panelH - 10;
+  if (panelY < 10) panelY = 10;
+
+  fill(30);
+  stroke(70);
+  rect(panelX, panelY, panelW, panelH, 8);
 
   noStroke();
   fill(220);
   textSize(12);
-  textAlign(LEFT, CENTER);
-
-  let name = combo.character_1 || "Unknown";
-  let damage = combo.damage || 0;
-  let meter = combo.meter_cost || 0;
+  textAlign(LEFT, TOP);
 
   text(
-    `${name}  |  ${damage} dmg  |  ${meter} bar`,
-    infoStartX + 10,
-    baseY - 6
+`${combo.character_1 || "Unknown"}
+Damage: ${combo.damage || 0}
+Meter: ${combo.meter_cost || 0}
+Length: ${combo.genome.length}
+Sort: ${sortMode}
+Char Filter: ${selectedCharacter}
+Meter Filter: ${selectedMeter}`,
+    panelX + 10,
+    panelY + 10
   );
 }
 
 function mouseWheel(event) {
 
-  scrollOffset += event.delta * 0.5;   // adjust speed
+  let visible = getVisibleCombos();
 
-  let totalHeight = combos.length * rowHeight;
+  scrollOffset += event.delta * 0.5;
+
+  let totalHeight = visible.length * rowHeight;
   let visibleHeight = height - startY;
 
   let maxScroll = max(0, totalHeight - visibleHeight);
 
   scrollOffset = constrain(scrollOffset, 0, maxScroll);
 
-  return false;  // 🔥 prevents page from scrolling
+  return false;
+}
+
+function keyPressed() {
+
+  if (key === 'd') sortMode = "damage";
+  if (key === 'm') sortMode = "meter";
+
+  if (key === '0') selectedMeter = "ALL";
+  if (key === '1') selectedMeter = 1;
+  if (key === '2') selectedMeter = 2;
+  if (key === '3') selectedMeter = 3;
+
+  if (key === 'c') {
+    let currentIndex = characters.indexOf(selectedCharacter);
+    currentIndex++;
+    if (currentIndex >= characters.length) {
+      selectedCharacter = "ALL";
+    } else {
+      selectedCharacter = characters[currentIndex];
+    }
+  }
+
+  scrollOffset = 0; // reset scroll on filter/sort
 }
 
 function colorForType(type) {
@@ -106,30 +182,24 @@ function colorForType(type) {
 }
 
 function drawLegend() {
+
   fill(25);
   noStroke();
-  rect(width - 200, 50, 180, 320, 8);
+  rect(width - legendWidth, 50, legendWidth - 20, 320, 8);
 
-  let legendX = width - 180;
+  let legendX = width - legendWidth + 20;
   let legendY = 80;
   let boxSize = 16;
-  let spacing = 28;
-
-  let types = [
-    "light",
-    "medium",
-    "heavy",
-    "super",
-    "assist",
-    "dash",
-    "jump",
-    "direction",
-    "other"
-  ];
+  let spacing = 26;
 
   fill(200);
   textSize(14);
   text("Legend", legendX, legendY - 25);
+
+  let types = [
+    "light","medium","heavy","super",
+    "assist","dash","jump","direction","other"
+  ];
 
   for (let i = 0; i < types.length; i++) {
     let t = types[i];
@@ -146,6 +216,15 @@ function drawLegend() {
       legendY + i * spacing + boxSize - 4
     );
   }
+
+  fill(180);
+  textSize(11);
+  text("Controls:", legendX, legendY + 9 * spacing + 20);
+  text("D = sort damage", legendX, legendY + 9 * spacing + 40);
+  text("M = sort meter", legendX, legendY + 9 * spacing + 55);
+  text("1/2/3 = meter filter", legendX, legendY + 9 * spacing + 70);
+  text("0 = clear meter", legendX, legendY + 9 * spacing + 85);
+  text("C = cycle character", legendX, legendY + 9 * spacing + 100);
 }
 
 function windowResized() {
