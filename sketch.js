@@ -5,7 +5,7 @@ let startY = 60;
 let scrollOffset = 0;
 
 let legendWidth = 200;
-let infoWidth = 240;
+let infoWidth = 280;
 let rightPadding = 20;
 
 let sortMode = "damage";
@@ -30,24 +30,20 @@ function setup() {
 
 function draw() {
   background(15);
-
   if (combos.length === 0) return;
 
   let visible = getVisibleCombos();
 
-  // ---- DRAW GENOMES (SCROLLING) ----
   let y = startY - scrollOffset;
 
   for (let i = 0; i < visible.length; i++) {
     if (y > -rowHeight && y < height + rowHeight) {
-      drawGenome(visible[i], y);
+      drawGenomeRow(visible[i], y);
     }
     y += rowHeight;
   }
 
-  // ---- FIXED PANELS ----
   drawLegend();
-  drawStaticInfoPanel(visible);
 }
 
 function getVisibleCombos() {
@@ -72,11 +68,14 @@ function getVisibleCombos() {
   return filtered;
 }
 
-function drawGenome(combo, baseY) {
+function drawGenomeRow(combo, baseY) {
   if (!combo.genome) return;
 
   let genomeStartX = 40;
+  let infoStartX = width - legendWidth - infoWidth - rightPadding;
   let blockHeight = 14;
+
+  // ---- GENOME ----
   let x = genomeStartX;
 
   for (let g of combo.genome) {
@@ -86,50 +85,30 @@ function drawGenome(combo, baseY) {
     rect(x, baseY - blockHeight, blockWidth, blockHeight);
     x += blockWidth;
   }
-}
 
-function drawStaticInfoPanel(visible) {
-
-  let rowIndex = Math.floor((mouseY + scrollOffset - startY) / rowHeight);
-
-  let panelX = width - legendWidth - infoWidth - rightPadding;
-  let panelY = 80;   // FIXED POSITION
-  let panelW = infoWidth;
-  let panelH = 140;
-
+  // ---- INFO STRIP ----
   fill(25);
-  stroke(70);
-  rect(panelX, panelY, panelW, panelH, 10);
+  stroke(60);
+  rect(infoStartX, baseY - 18, infoWidth, 22, 6);
 
   noStroke();
   fill(220);
-  textSize(13);
-  textAlign(LEFT, TOP);
+  textSize(12);
+  textAlign(LEFT, CENTER);
 
-  if (rowIndex < 0 || rowIndex >= visible.length) {
-    text("Hover over a combo", panelX + 12, panelY + 12);
-    return;
-  }
-
-  let combo = visible[rowIndex];
+  let name = combo.character_1 || "Unknown";
+  let damage = combo.damage || 0;
+  let meter = combo.meter_cost || 0;
+  let length = combo.genome.length;
 
   text(
-`Character: ${combo.character_1 || "Unknown"}
-
-Damage: ${combo.damage || 0}
-Meter Cost: ${combo.meter_cost || 0}
-Length: ${combo.genome.length}
-
-Sort: ${sortMode}
-Character Filter: ${selectedCharacter}
-Meter Filter: ${selectedMeter}`,
-    panelX + 12,
-    panelY + 12
+    `| ${name} | ${damage} | ${meter} | ${length} |`,
+    infoStartX + 10,
+    baseY - 6
   );
 }
 
 function mouseWheel(event) {
-
   let visible = getVisibleCombos();
 
   scrollOffset += event.delta * 0.5;
@@ -138,7 +117,6 @@ function mouseWheel(event) {
   let visibleHeight = height - startY;
 
   let maxScroll = max(0, totalHeight - visibleHeight);
-
   scrollOffset = constrain(scrollOffset, 0, maxScroll);
 
   return false;
@@ -203,27 +181,17 @@ function drawLegend() {
   ];
 
   for (let i = 0; i < types.length; i++) {
-    let t = types[i];
-
-    fill(colorForType(t));
+    fill(colorForType(types[i]));
     rect(legendX, legendY + i * spacing, boxSize, boxSize, 3);
 
     fill(200);
     textSize(12);
     text(
-      t,
+      types[i],
       legendX + boxSize + 12,
       legendY + i * spacing + boxSize - 4
     );
   }
-
-  fill(180);
-  textSize(11);
-  text("D = sort damage", legendX, legendY + 9 * spacing + 20);
-  text("M = sort meter", legendX, legendY + 9 * spacing + 35);
-  text("1/2/3 = meter filter", legendX, legendY + 9 * spacing + 50);
-  text("0 = clear meter", legendX, legendY + 9 * spacing + 65);
-  text("C = cycle character", legendX, legendY + 9 * spacing + 80);
 }
 
 function windowResized() {
